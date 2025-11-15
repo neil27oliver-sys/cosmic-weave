@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cosmic Weave: Orbital Bop Maker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="manifest" href="data:application/json;base64,eyJuYW1lIjoiQ29zbWljIFdlYXZlIiwiY29sb3IiOiIjMThiZGY4Iiwic3RhcnRfdXJsIjoiLi8iLCJkaXNwbGF5Ijoic3RhbmRhbG9uZSJ9">
+    <meta name="theme-color" content="#38bdf8">
+    <style>
+        :root {
+            --primary-color: #0d1117;
+            --accent-color: #38bdf8;
+            --center-glow: #fde047;
+            --text-color: #e2e8f0;
+            --eye-size: 220px;
+            --pupil-size: 80px;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--primary-color);
+            background-image: radial-gradient(circle at center, rgba(56, 189, 248, 0.05) 1px, transparent 1px);
+            background-size: 25px 25px;
+            color: var(--text-color);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        #orbital-container {
+            position: relative;
+            width: 90vmin;
+            max-width: 500px;
+            aspect-ratio: 1 / 1;
+            margin-bottom: 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.5s ease-in-out;
+        }
+        #center-eye {
+            width: var(--eye-size);
+            height: var(--eye-size);
+            background: #e2e8f0;
+            border-radius: 50%;
+            box-shadow: 0 0 40px rgba(253, 224, 71, 0.4), inset 0 0 10px rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            border: 3px dashed #fde04750;
+            overflow: hidden;
+        }
+        #center-pupil {
+            width: var(--pupil-size);
+            height: var(--pupil-size);
+            background: #000;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: absolute;
+            z-index: 10;
+            transition: all 0.3s;
+        }
+        .pupil-weave-button {
+            line-height: 1;
+            transition: transform 0.2s;
+            user-select: none;
+        }
+        .pupil-weave-button.clickable:hover {
+            transform: scale(1.1);
+            color: var(--accent-color);
+            cursor: pointer;
+        }
+        #weave-beads-container {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+        }
+        .selected-bead {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: var(--accent-color);
+            box-shadow: 0 0 10px rgba(56, 189, 248, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+        .selected-bead:hover {
+            transform: scale(1.2);
+            z-index: 15;
+        }
+        .category-circle {
+            position: absolute;
+            width: 80px;
+            height: 80px;
+            background-color: #f97316;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: var(--primary-color);
+            box-shadow: 0 5px 15px rgba(249, 115, 22, 0.4);
+            transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+        .category-circle:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 20px #f97316;
+        }
+        .category-circle.active {
+            box-shadow: 0 0 0 5px var(--accent-color), 0 0 20px #f97316;
+            transform: scale(1.15);
+        }
+        .emoji-ring-item {
+            position: absolute;
+            width: 45px;
+            height: 45px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid var(--accent-color);
+            border-radius: 50%;
+            cursor: grab;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            opacity: 0;
+            pointer-events: auto;
+            transition: all 0.3s ease-out, opacity 0.3s 0.1s;
+            backdrop-filter: blur(5px);
+            margin-left: -22.5px;
+            margin-top: -22.5px;
+        }
+        .emoji-ring-item.visible {
+            opacity: 1;
+        }
+        .output-circle {
+            width: 140px;
+            height: 140px;
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            transition: transform 0.3s;
+            position: relative;
+        }
+        .output-circle:hover {
+            transform: translateY(-5px);
+        }
+        .output-circle textarea, .output-circle input, .output-circle select {
+            width: 100%;
+            background: rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 8px;
+            padding: 5px;
+            font-size: 0.8rem;
+            color: var(--text-color);
+            margin-top: 5px;
+            resize: none;
+        }
+        .circle-btn {
+            background: rgba(255,255,255,0.15);
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            cursor: pointer;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.5);
+            transition: all 0.2s;
+        }
+        .circle-btn:hover {
+            background: rgba(255,255,255,0.3);
+            transform: scale(1.05);
+        }
+        .rect-suno-btn {
+            background: linear-gradient(135deg, #10b981, #059669);
+            padding: 12px 24px;
+            border-radius: 12px;
+            color: white;
+            font-weight: bold;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 20px rgba(16, 185, 129, 0.4);
+            transition: all 0.3s;
+            font-size: 1rem;
+        }
+        .rect-suno-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 25px rgba(16, 185, 129, 0.6);
+        }
+        @media (max-width: 640px) {
+            :root {
+                --eye-size: 180px;
+                --pupil-size: 60px;
+            }
+            #orbital-container {
+                width: 90vw;
+                max-width: 350px;
+            }
+            .category-circle {
+                width: 70px;
+                height: 70px;
+                font-size: 1.2rem;
+            }
+            .selected-bead {
+                width: 30px;
+                height: 30px;
+                font-size: 1.2rem;
+            }
+            .output-circle {
+                width: 100%;
+                height: auto;
+                border-radius: 1rem;
+            }
+            #screen-two-content {
+                flex-direction: column;
+                gap: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="app-root" class="w-full p-4 max-w-5xl mx-auto">
+        <header class="text-center mb-8 relative">
+            <!-- Monogram Logo – Top-Left -->
+    <img src="assets/images/monogram.png" alt="Monogram" id="monogram-logo">
+            <h1 class="text-5xl font-extrabold tracking-tight text-accent-color">
+                🪐 Cosmic Weave
+            </h1>
+            <p class="text-sm text-gray-400 italic mt-2">
+                Orbital Bop Maker: Fuse Emojis into Lyrics
+            </p>
+        </header>
+
+        <div id="screen-one" class="flex flex-col items-center justify-center">
+            <p class="text-lg mb-8 text-center text-gray-300">
+                <span id="instruction-text">
+                    Select a **Category Circle** to reveal emojis. Drag 3-6 into the **Center Eye** to start your Weave!
+                </span>
+            </p>
+
+            <div id="orbital-container">
+                <div id="center-eye" class="relative"
+                     ondrop="handlePupilDrop(event)"
+                     ondragover="allowDrop(event)"
+                     ondragleave="removeDropFeedback(event)">
+                    
+                    <div id="weave-beads-container"></div>
+                    
+                    <div id="center-pupil" class="center-pupil">
+                        <span class="pupil-weave-button text-gray-500 font-bold" id="pupil-placeholder">
+                            Drop 3-6 Emojis
+                        </span>
+                    </div>
+                </div>
+
+                <div class="category-circle" data-group="Feelings" style="--angle: 0deg;" onclick="selectCategory(this, 'Feelings')">💖</div>
+                <div class="category-circle" data-group="Activities" style="--angle: 60deg;" onclick="selectCategory(this, 'Activities')">🕹️</div>
+                <div class="category-circle" data-group="Nature" style="--angle: 120deg;" onclick="selectCategory(this, 'Nature')">🌱</div>
+                <div class="category-circle" data-group="Food" style="--angle: 180deg;" onclick="selectCategory(this, 'Food')">🍕</div>
+                <div class="category-circle" data-group="Objects" style="--angle: 240deg;" onclick="selectCategory(this, 'Objects')">💡</div>
+                <div class="category-circle" data-group="Travel" style="--angle: 300deg;" onclick="selectCategory(this, 'Travel')">🚀</div>
+            </div>
+        </div>
+
+        <div id="screen-two" class="hidden flex flex-col items-center p-4">
+            <h2 class="text-2xl font-bold text-accent-color mb-4 text-center">
+                Weave Ready: Finalize Parameters
+            </h2>
+            <p class="text-sm text-gray-400 mb-8 text-center">
+                Customise the **Lyrics**, choose a **Style**, and set the **Title** before downloading your Suno file.
+            </p>
+
+            <div id="screen-two-content" class="flex justify-center flex-wrap gap-8 w-full max-w-4xl">
+                <div class="output-circle bg-red-600/30 border border-red-500/50 min-h-[140px] flex-grow">
+                    <label>📝 Lyrics</label>
+                    <textarea id="output-lyrics" rows="4" class="w-full h-full text-sm"></textarea>
+                    <div class="absolute -bottom-8">
+                        <button class="circle-btn text-red-400 text-base" onclick="copySingle('output-lyrics')">
+                            📋
+                        </button>
+                    </div>
+                </div>
+
+                <div class="output-circle bg-purple-600/30 border border-purple-500/50 flex-grow max-w-[200px]">
+                    <label>🎧 Style</label>
+                    <select id="output-style-select" class="mb-2 text-sm">
+                        <option value="Pop">Pop</option>
+                        <option value="Rock">Rock</option>
+                        <option value="Hip-hop/Rap">Hip-hop/Rap</option>
+                        <option value="Country">Country</option>
+                        <option value="Electronic Dance Music (EDM)">EDM</option>
+                        <option value="Ambient Dream">Ambient Dream</option>
+                    </select>
+                    <input type="text" id="output-custom-style" placeholder="Custom Vibe..." class="text-xs">
+                    <div class="absolute -bottom-8">
+                        <button class="circle-btn text-purple-400 text-base" onclick="copyStyle()">
+                            📋
+                        </button>
+                    </div>
+                </div>
+
+                <div class="output-circle bg-amber-600/30 border border-amber-500/50 flex-grow max-w-[200px]">
+                    <label>✨ Title</label>
+                    <input type="text" id="output-title" class="text-sm">
+                    <div class="absolute -bottom-8">
+                        <button class="circle-btn text-amber-400 text-base" onclick="copySingle('output-title')">
+                            📋
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="suno-instructions-card" class="mt-12 w-full max-w-2xl bg-gray-800/50 border border-gray-700 p-6 rounded-xl shadow-lg">
+                <h3 class="text-xl font-bold text-accent-color mb-3 border-b border-gray-700 pb-2">
+                    Suno Instructions
+                </h3>
+                <ol class="list-decimal list-inside space-y-2 text-gray-300 ml-4">
+                    <li>New to Suno? <a href="https://suno.com" target="_blank" class="text-sky-400 hover:text-sky-300 underline">Register free</a> first (opens in new tab).</li>
+                    <li>Download your bop file below, open it, and copy-paste into <a href="https://suno.ai/create" target="_blank" class="text-sky-400 hover:text-sky-300 underline">Custom Mode</a> (new tab).</li>
+                    <li>After pasting the lyrics, if you wish generate 3-min lyrics by clicking the pen icon on the top right and follow instructions.</li>
+                    <li>Once you have pasted the required sections: Lyrics, Style, Song Title—press Create.</li>
+                    <li>Suno creates two versions. Click on the title of one you prefer and download your MP3 or video.</li>
+                </ol>
+                <p class="mt-4 text-sm text-amber-300 font-semibold italic">
+                    📱 Mobile Tip: Long-press the file to copy sections.
+                </p>
+            </div>
+
+            <div class="flex flex-col sm:flex-row gap-8 mt-16 items-center">
+                <button class="circle-btn bg-gray-600 text-gray-200" onclick="goToScreenOne()">
+                    🔙 Back
+                </button>
+                
+                <button class="circle-btn bg-red-700/50 text-red-300" onclick="clearOutputFields()">
+                    🗑️ Clear
+                </button>
+
+                <button class="rect-suno-btn" onclick="generateSunoFile()">
+                    🎥 Suno Video Creation
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let beadSequence = [];let currentGroup = null;const EMOJI_GROUPS = {Feelings: ["😂", "😊", "✨", "😭", "😩", "🤪", "🥰", "😍", "❤️", "💔"],Activities: ["🏃‍♀️", "💃", "📚", "🎨", "🎮", "🎸", "🎧", "🎬", "🎤", "🧘"],Nature: ["🌸", "🌹", "🌞", "🌙", "🌊", "🌲", "🔥", "💧", "🌈", "⚡"],Food: ["🍕", "🍔", "🌮", "🍎", "🍰", "☕", "🍺", "🍇", "🌶️", "🥨"],Objects: ["💡", "🎁", "🔑", "⌚", "📱", "💻", "💰", "💎", "📚", "🕯️"],Travel: ["🚀", "✈️", "🚢", "🗺️", "🧳", "🏔️", "🏖️", "🌃", "🌉", "🚂"]};const $ = id => document.getElementById(id);function showScreen(screenId) { $('screen-one').classList.add('hidden'); $('screen-two').classList.add('hidden'); $(screenId).classList.remove('hidden'); $(screenId).classList.add('flex'); } function goToScreenOne() { showScreen('screen-one'); updateWeaveContainer();  } function goToScreenTwo() { if (beadSequence.length < 3) { displayMessage('Oops!', 'You need a minimum of 3 emojis to Weave your Bop. Drop more into the Center Eye!'); return; } generateOutputText(); showScreen('screen-two'); } function positionElements() { const container = $('orbital-container'); const centerRadius = container.offsetWidth / 2; const orbitRadius = centerRadius * 0.7;  const categoryCircles = container.querySelectorAll('.category-circle'); const numCategories = categoryCircles.length; categoryCircles.forEach((circle, index) => { const angle = 360 / numCategories * index; circle.style.transform = `rotate(${angle}deg) translate(${orbitRadius}px) rotate(-${angle}deg)`; circle.style.setProperty('--angle', `${angle}deg`); });  if (beadSequence.length > 0) { updateWeaveContainer(); } } function selectCategory(el, groupName) { document.querySelectorAll('.category-circle').forEach(c => c.classList.remove('active')); el.classList.add('active'); currentGroup = groupName;  document.querySelectorAll('.emoji-ring-item').forEach(e => e.remove()); const emojis = EMOJI_GROUPS[groupName]; const numEmojis = emojis.length; const container = $('orbital-container'); const centerRadius = container.offsetWidth / 2; const ringRadius = centerRadius * 0.45;  emojis.forEach((emoji, index) => { const ringAngle = 360 / numEmojis * index; const radians = (ringAngle * Math.PI) / 180;  const x = ringRadius * Math.cos(radians - Math.PI / 2);  const y = ringRadius * Math.sin(radians - Math.PI / 2); const item = document.createElement('div'); item.className = 'emoji-ring-item'; item.textContent = emoji; item.draggable = true; item.ondragstart = handleDragStart; item.dataset.emoji = emoji;  item.style.transform = `translate(${x}px, ${y}px)`; item.style.left = '50%'; item.style.top = '50%'; setTimeout(() => { item.classList.add('visible'); }, 10); container.appendChild(item); }); } function handleDragStart(ev) { const emoji = ev.target.dataset.emoji || ev.target.textContent.trim(); ev.dataTransfer.setData("text/plain", emoji); } function allowDrop(ev) { ev.preventDefault(); ev.currentTarget.classList.add('ring-4', 'ring-yellow-400/50'); } function removeDropFeedback(ev) { ev.currentTarget.classList.remove('ring-4', 'ring-yellow-400/50'); } function handlePupilDrop(ev) { ev.preventDefault(); ev.currentTarget.classList.remove('ring-4', 'ring-yellow-400/50'); const emoji = ev.dataTransfer.getData("text/plain"); if (!emoji) return; if (beadSequence.length >= 6) { displayMessage('Weave Limit', 'Maximum of 6 emojis reached. Click one in the eye to remove it first!'); return; } if (beadSequence.includes(emoji)) { displayMessage('Duplicate Bead', `The emoji ${emoji} is already in the Weave! Try a unique one.`); return; } beadSequence.push(emoji); updateWeaveContainer(); } function updateWeaveContainer() { const container = $('weave-beads-container'); container.innerHTML = ''; const numBeads = beadSequence.length;  const eyeSize = parseFloat(getComputedStyle($('center-eye')).width); const beadRadius = eyeSize / 2; const placementRadius = beadRadius * 0.6; beadSequence.forEach((emoji, index) => { const angle = 360 / numBeads * index; const radians = (angle * Math.PI) / 180;  const x = placementRadius * Math.cos(radians - Math.PI / 2); const y = placementRadius * Math.sin(radians - Math.PI / 2); const bead = document.createElement('div'); bead.className = 'selected-bead absolute -translate-x-1/2 -translate-y-1/2';  bead.textContent = emoji; bead.title = 'Click to remove'; bead.onclick = () => removeEmojiFromWeave(emoji);  bead.style.left = `${beadRadius + x}px`; bead.style.top = `${beadRadius + y}px`;  container.appendChild(bead); });  const pupil = $('center-pupil'); const weaveButton = $('pupil-placeholder'); if (numBeads >= 3) { weaveButton.innerHTML = '🚀 **WEAVE**'; weaveButton.classList.add('text-accent-color', 'text-xl', 'clickable'); pupil.onclick = goToScreenTwo; } else { weaveButton.innerHTML = 'Drop 3-6 Emojis'; weaveButton.classList.remove('text-accent-color', 'text-xl', 'clickable'); pupil.onclick = null;  } } function removeEmojiFromWeave(emoji) { beadSequence = beadSequence.filter(e => e !== emoji); updateWeaveContainer(); } function generateOutputText() { const emojis = beadSequence.join(' '); const primaryEmoji = beadSequence[0]; const mood = beadSequence.length > 3 ? 'complex, layered' : 'focused';  const baseStyle = $('output-style-select').value; const customStyle = $('output-custom-style').value; const finalStyle = customStyle ? `${customStyle} style` : `${baseStyle} style`; const sunoStyle = `${finalStyle}, dreamy, 30-sec hook, ${mood} synth-wave, emphasizing the emotional core of ${primaryEmoji}.`;  const title = `${primaryEmoji} Orbital Weave: The ${baseStyle} Bop`; const lyrics = `[Verse 1]\nOrbiting the feeling, led by the ${primaryEmoji}.\nA ${mood} wave flows, listen to the cosmic beat.\n[Chorus]\nWeave the ${emojis} together, a harmony unseen,\nIn the heart of the void, a thirty-second dream.\n[Outro]\nFading light, fading sound, the ${primaryEmoji} spins around.\n`; $('output-lyrics').value = lyrics.trim(); $('output-title').value = title; } function clearOutputFields() { beadSequence = []; updateWeaveContainer();  $('output-lyrics').value = ''; $('output-style-select').value = 'Pop'; $('output-custom-style').value = ''; $('output-title').value = ''; displayMessage('Cleared', 'All output fields and the Weave (emojis) have been reset.'); } function copyToClipboard(text, message) { const isMobile = /Android|iPhone/i.test(navigator.userAgent); if (navigator.clipboard && !isMobile) { navigator.clipboard.writeText(text).then(() => { successFeedback(message); }).catch(() => fallbackCopy(text, message)); } else { fallbackCopy(text, message); } } function fallbackCopy(text, message) { const textArea = document.createElement("textarea"); textArea.value = text; textArea.style.position = "fixed"; textArea.style.left = "-999999px"; document.body.appendChild(textArea); textArea.focus(); textArea.select(); try { const success = document.execCommand('copy'); document.body.removeChild(textArea); if (success) { successFeedback(message); } else { displayMessage('Copy Fail', 'Tap to select text manually—long-press on mobile!'); } } catch (err) { document.body.removeChild(textArea); displayMessage('Copy Fail', 'Tap to select text manually—long-press on mobile!'); } } function successFeedback(message) { displayMessage('Copied!', message); if (navigator.vibrate) navigator.vibrate(50); } function copySingle(id) { const elem = $(id); if (!elem) return; const text = elem.value || elem.textContent; copyToClipboard(text, `${id.split('-').pop()} parameter copied!`); } function copyStyle() { const baseStyle = $('output-style-select').value; const customStyle = $('output-custom-style').value; const finalStyle = customStyle ? customStyle : baseStyle;  const mood = beadSequence.length > 3 ? 'complex, layered' : 'focused'; const primaryEmoji = beadSequence.length > 0 ? beadSequence[0] : 'vibe'; const sunoStyle = `${finalStyle}, dreamy, 30-sec hook, ${mood} synth-wave, emphasizing the emotional core of ${primaryEmoji}.`;  copyToClipboard(sunoStyle, `Style prompt copied!`); } function generateSunoFile() { const lyrics = $('output-lyrics').value; const style = document.querySelector('#output-style-select').value + ($('#output-custom-style').value ? ` + ${$('#output-custom-style').value}` : ''); const title = $('#output-title').value; if (!lyrics || !title) { displayMessage('Hold Up', 'Finalize Lyrics & Title first!'); return; } const content = `Cosmic Weave Bop Export\n===================\nTitle: ${title}\nStyle: ${style}\nLyrics:\n${lyrics}\n\nPaste into Suno Custom Mode & Create! 🚀`; const blob = new Blob([content], { type: 'text/plain' }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = 'cosmic-bop.txt'; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url); displayMessage('File Ready!', 'Download your bop file—paste into Suno now. New users: Register first!'); setTimeout(() => window.open('https://suno.ai/create', '_blank'), 1000); } function displayMessage(title, message) { const tempDiv = document.createElement('div'); tempDiv.className = 'fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50'; tempDiv.innerHTML = `\n                <div class="bg-primary-color p-6 rounded-xl shadow-2xl max-w-sm mx-auto border-t-4 border-accent-color">\n                    <h4 class="text-xl font-bold text-accent-color mb-3">${title}</h4>\n                    <p class="text-sm text-gray-300">${message}</p>\n                    <button onclick="this.parentNode.parentNode.remove()" class="mt-4 w-full py-2 bg-accent-color text-primary-color font-semibold rounded-lg hover:bg-sky-400">\n                        Got It\n                    </button>\n                </div>\n            `; document.body.appendChild(tempDiv); } window.onload = () => { positionElements(); document.querySelector('.category-circle').click();  }; window.onresize = positionElements;
+    </script>
+</body>
+</html>
